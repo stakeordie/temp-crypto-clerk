@@ -9,9 +9,9 @@ export default {
   wallet: undefined,
   scrt: undefined,
 
-  init() {
+  async init() {
     this.wallet = await useWallet()
-    this.scrt = await createScrtClient(url, wallet)  
+    this.scrt = await createScrtClient(url, this.wallet)  
   },
 
   getDatesArray(startDate, endDate) {
@@ -32,7 +32,7 @@ export default {
     if(height === undefined) {
       height = await this.getHeight()
     }
-    const address = await wallet.getAddress()
+    const address = await this.wallet.getAddress()
 
     const msg = {
       "balance": {
@@ -48,7 +48,6 @@ export default {
     const sefiVk = await this.wallet.getSnip20ViewingKey('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt');
     const address = await this.wallet.getAddress()
     // secretcli q compute query secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt  '{"transfer_history":{ "address": "secret1t85jewrnlskhc2p3dzfnfh5puzthd0lxzwp6ly", "key": "api_key_HMKLSbe7UvBhLpurl0jysNhHwRiqeeEMUJxx/0uZJLw=", "page_size":1000}}'
-    console.log(scrt)
     const msg = {
       "transfer_history": {
         "address": address,
@@ -63,7 +62,7 @@ export default {
   },
 
   async getSpySefiSignedTxs(spyAddress) {
-    const address = await wallet.getAddress()
+    const address = await this.wallet.getAddress()
     const url = 'https://api.stakeordie.com/txs?message.action=execute&message.signer=' + address + '&message.contract_address=' + spyAddress;
     const res = await axios.get(url);
     const txs = res.data.txs;
