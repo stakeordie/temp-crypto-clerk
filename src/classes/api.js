@@ -4,10 +4,6 @@ import { createScrtClient, useWallet, coinConvert } from '@stakeordie/griptape.j
 
 const url = 'https://datahubarchive.stakeordie.workers.dev'
 
-const wallet = await useWallet()
-
-const scrt = await createScrtClient(url, wallet)
-
 export default {
 
   getDatesArray(startDate, endDate) {
@@ -24,6 +20,8 @@ export default {
   },
 
   async getArchivalBalance(contractAddress, height) {
+    const wallet = await useWallet()
+    const scrt = await createScrtClient(url, wallet)
     const Vk = await wallet.getSnip20ViewingKey(contractAddress)
     if(height === undefined) {
       height = await this.getHeight()
@@ -41,6 +39,8 @@ export default {
   },
 
   async getSefiTransactionHistory() {
+    const wallet = await useWallet()
+    const scrt = await createScrtClient(url, wallet)  
     const sefiVk = await wallet.getSnip20ViewingKey('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt');
     const address = await wallet.getAddress()
     // secretcli q compute query secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt  '{"transfer_history":{ "address": "secret1t85jewrnlskhc2p3dzfnfh5puzthd0lxzwp6ly", "key": "api_key_HMKLSbe7UvBhLpurl0jysNhHwRiqeeEMUJxx/0uZJLw=", "page_size":1000}}'
@@ -81,6 +81,8 @@ export default {
   },
 
   async getIncentivizedToken(contractAddress) {
+    const wallet = await useWallet()
+    const scrt = await createScrtClient(url, wallet)
     const msg = {
       "incentivized_token": {}
     }
@@ -97,6 +99,8 @@ export default {
   },
 
   async getSpyUnclaimedRewards(spyAddress) {
+    const wallet = await useWallet()
+    const scrt = await createScrtClient(url, wallet)
     const spySefiVk = await wallet.getSnip20ViewingKey(spyAddress);
     const height = await this.getHeight();
     const address = await wallet.getAddress();
