@@ -1,4 +1,10 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+import api from './classes/api';
+
+api.init().then(() => {
+  createApp(App).mount('#app')
+});
+
+

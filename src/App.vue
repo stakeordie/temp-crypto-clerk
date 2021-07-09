@@ -36,7 +36,7 @@ import { coinConvert } from '@stakeordie/griptape.js'
 
 export default {
   async mounted() {
-    api.init();
+    await api.init();
     // const txs = await api.getSefiTransactionHistory();
     // const pub_tx_log = await api.getSpySefiSignedTxs();
     // const unclaimedRewards = await api.getSpyUnclaimedRewards();
