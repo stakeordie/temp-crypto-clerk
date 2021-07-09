@@ -6,6 +6,14 @@ const url = 'https://datahubarchive.stakeordie.workers.dev'
 
 export default {
 
+  wallet: undefined,
+  scrt: undefined,
+
+  init() {
+    this.wallet = await useWallet()
+    this.scrt = await createScrtClient(url, wallet)  
+  },
+
   getDatesArray(startDate, endDate) {
 
     var now = startDate
@@ -20,9 +28,7 @@ export default {
   },
 
   async getArchivalBalance(contractAddress, height) {
-    const wallet = await useWallet()
-    const scrt = await createScrtClient(url, wallet)
-    const Vk = await wallet.getSnip20ViewingKey(contractAddress)
+    const Vk = await this.wallet.getSnip20ViewingKey(contractAddress)
     if(height === undefined) {
       height = await this.getHeight()
     }
@@ -34,15 +40,13 @@ export default {
         "key": Vk
       }
     }
-    const res = await scrt.queryContract(contractAddress, msg, { height })
+    const res = await this.scrt.queryContract(contractAddress, msg, { height })
     return res.balance
   },
 
   async getSefiTransactionHistory() {
-    const wallet = await useWallet()
-    const scrt = await createScrtClient(url, wallet)  
-    const sefiVk = await wallet.getSnip20ViewingKey('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt');
-    const address = await wallet.getAddress()
+    const sefiVk = await this.wallet.getSnip20ViewingKey('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt');
+    const address = await this.wallet.getAddress()
     // secretcli q compute query secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt  '{"transfer_history":{ "address": "secret1t85jewrnlskhc2p3dzfnfh5puzthd0lxzwp6ly", "key": "api_key_HMKLSbe7UvBhLpurl0jysNhHwRiqeeEMUJxx/0uZJLw=", "page_size":1000}}'
     console.log(scrt)
     const msg = {
@@ -53,7 +57,7 @@ export default {
       }
     }
 
-    const res = await scrt.queryContract('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt', msg);
+    const res = await this.scrt.queryContract('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt', msg);
     console.log(res);
     return res.transfer_history.txs;
   },
@@ -70,7 +74,7 @@ export default {
   },
 
   async getSignedTxs(contractAddress) {
-    const address = await wallet.getAddress()
+    const address = await this.wallet.getAddress()
     const url = 'https://api.stakeordie.com/txs?message.action=execute&message.signer=' + address + '&message.contract_address=' + contractAddress;
     const res = await axios.get(url);
     const txs = res.data.txs;
@@ -81,13 +85,11 @@ export default {
   },
 
   async getIncentivizedToken(contractAddress) {
-    const wallet = await useWallet()
-    const scrt = await createScrtClient(url, wallet)
     const msg = {
       "incentivized_token": {}
     }
 
-    const res = await scrt.queryContract(contractAddress, msg);
+    const res = await this.scrt.queryContract(contractAddress, msg);
     return res.incentivized_token.token.address;
   },
 
@@ -99,11 +101,9 @@ export default {
   },
 
   async getSpyUnclaimedRewards(spyAddress) {
-    const wallet = await useWallet()
-    const scrt = await createScrtClient(url, wallet)
-    const spySefiVk = await wallet.getSnip20ViewingKey(spyAddress);
+    const spySefiVk = await this.wallet.getSnip20ViewingKey(spyAddress);
     const height = await this.getHeight();
-    const address = await wallet.getAddress();
+    const address = await this.wallet.getAddress();
     const msg = {
       "rewards": {
         "address": address,
@@ -111,7 +111,7 @@ export default {
         "height": parseInt(height)
       }
     }
-    const res = await scrt.queryContract(spyAddress, msg);
+    const res = await this.scrt.queryContract(spyAddress, msg);
     return res.rewards.rewards;
   },
 
