@@ -14,12 +14,26 @@ export default {
     this.scrt = await createScrtClient(url, this.wallet)  
   },
 
+  // getDatesArray(startDate, endDate) {
+    // console.log("end date", endDate);
+
+  //   var now = startDate.subtract(1, 'days');
+  //   const dates = [];
+
+  //   while (now.isSameOrBefore(endDate)) {
+  //     now.add(1, 'days');
+  //     const date = now.format('YYYY-MM-DD');
+  //     if(moment().isSameOrAfter(now)) {
+  //       dates.push({ date });
+  //     }
+  //   }
+  //   return dates;
+  // },
   getDatesArray(startDate, endDate) {
 
     var now = startDate
     const dates = [];
-
-    while (now.isSameOrBefore(endDate)) {
+    while (now.isSameOrBefore(endDate, 'day')) {
         const date = now.format('YYYY-MM-DD');
         dates.push({ date });
         now.add(1, 'days');
@@ -57,18 +71,24 @@ export default {
     }
 
     const res = await this.scrt.queryContract('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt', msg);
-    console.log(res);
+    // console.log(res);
     return res.transfer_history.txs;
   },
 
   async getSpySefiSignedTxs(spyAddress) {
     const address = await this.wallet.getAddress()
+    // console.log("xaddress", address);
     const url = 'https://api.stakeordie.com/txs?message.action=execute&message.signer=' + address + '&message.contract_address=' + spyAddress;
+    // console.log("xurl", url);
     const res = await axios.get(url);
+    // console.log("res", res);
     const txs = res.data.txs;
+    // console.log("txs", txs);
     const filteredTxs = txs.filter(tx => {
-      return parseInt(tx.tx.value.fee.amount[0].amount) >= 75000
+      // console.log("tx", tx);
+      return parseInt(tx.tx.value.fee.amount[0].amount) >= 35000
     });
+    // console.log("filteredTxs", filteredTxs);
     return filteredTxs;
   },
 
@@ -115,8 +135,10 @@ export default {
   },
 
   async parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, spyAddress) {
+    // console.log("pub_tx_log", pub_tx_log);
 
-    //console.log("og", txs);
+
+    console.log("og", txs);
 
     //sort txs oldest to newest
 
@@ -126,7 +148,7 @@ export default {
         return 0;
     }); 
 
-    //console.log("sorted by id", txs);
+    console.log("sorted by id", txs);
 
     //remove txs not realated the the spyAddress
 
@@ -134,7 +156,7 @@ export default {
       return tx.from == spyAddress || tx.receiver == spyAddress
     })
 
-    //console.log("filtered", txs);
+    console.log("filtered", txs);
 
     //Identify the txs
     
@@ -167,21 +189,21 @@ export default {
     }
     
 
-   //console.log("typed", txs);
+   console.log("typed", txs);
 
     //GET SEFI LOG
     const incentivizedToken = await this.getIncentivizedToken(spyAddress);
     const sefiTxs = await this.getSignedTxs(incentivizedToken)
     let startDate;
-    console.log("initAmount", parseInt(txs[0].coins.amount));
+    // console.log("initAmount", parseInt(txs[0].coins.amount));
     for(let i=0; i<sefiTxs.length; i++){
       const balancepre = await this.getArchivalBalance(incentivizedToken, parseInt(sefiTxs[i].height) - 1)
       const balance = await this.getArchivalBalance(incentivizedToken, parseInt(sefiTxs[i].height))
       const delta = parseInt(balancepre.amount) - parseInt(balance.amount)
-      console.log("delta", delta);
+      // console.log("delta", delta);
       if(parseInt(txs[0].coins.amount) == delta) {
         startDate = moment(sefiTxs[i].timestamp)
-        console.log(startDate);
+        // console.log("startdate",startDate);
         break;
       }
     }
@@ -204,10 +226,10 @@ export default {
       txs_new.push(txs[i]);
     }
 
-    console.log("typed_filtered", txs_new);
+    // console.log("typed_filtered", txs_new);
     
     let prev_date = startDate;
-    console.log(txs_new.length);
+    // console.log(txs_new.length);
     let daily_rewards;
     let mod;
     for(let i=0;i<txs_new.length;i++) {
@@ -219,7 +241,7 @@ export default {
       prev_date = date;
       const days = txs_new[i].date_to.diff(txs_new[i].date_from, 'days');
       const hours = txs_new[i].date_to.diff(txs_new[i].date_from, 'hours');
-      console.log("hours", hours);
+      // console.log("hours", hours);
       txs_new[i].days = days
       txs_new[i].hours = hours
     }
@@ -242,6 +264,7 @@ export default {
     let current_date;
     if(unclaimedRewards > 0) {
       current_date = moment();
+      // console.log("current_date", current_date);
       const dateDiff = current_date.diff(prev_date, 'days')
       txs_new.push({
         coins: {
@@ -259,11 +282,11 @@ export default {
     }
 
 
-    console.log("dated&heighted", txs_new);
+    // console.log("dated&heighted", txs_new);
 
     const daysArray = this.getDatesArray(startDate, current_date);
 
-    console.log(daysArray)
+    // console.log(daysArray)
     
     
     daysArray.forEach(day => {
@@ -271,10 +294,13 @@ export default {
       const txDate = txs_new.find(tx => {
         return date.isSameOrBefore(tx.date_to)
       })
-      day.rewards = txDate.daily_rewards
-      if(txDate.date_to.isSame(date, 'day')) {
-        day.claim = txDate.coins.amount
-      }
+      // console.log("txDataData",txDate)
+      //if(txDate) {
+        day.rewards = txDate.daily_rewards
+        if(txDate.date_to.isSame(date, 'day')) {
+          day.claim = txDate.coins.amount
+        }
+      //}
     })
 
     return daysArray;

@@ -12,7 +12,7 @@
   <input v-if="manualDate" type="date" v-model="startDateString"/> -->
   <br>
   <button @click="doit">Get Rewards</button>
-  <table>
+  <table v-if="!zeroTransactions">
     <thead>
       <tr>
         <th>Date</th>
@@ -28,6 +28,7 @@
       </tr>
     </tbody>
   </table>
+  <div v-if="zeroTransactions">No Transactions</div>
 </template>
 
 <script>
@@ -41,23 +42,24 @@ export default {
     // const pub_tx_log = await api.getSpySefiSignedTxs();
     // const unclaimedRewards = await api.getSpyUnclaimedRewards();
     // this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, '2021-03-30', "secret1y9z3ck449a46r4ku7klkhdxnlq07zh4shc7cuy")
-    // console.log(this.days);
+    //console.log(this.days);
     /*const txs = await api.getSignedTxs('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt')
-    console.log(txs)
+    // console.log(txs)
     for(let i=0; i<txs.length; i++){
       const balancepre = await api.getArchivalBalance('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt', parseInt(txs[i].height) - 1)
-      console.log(balancepre);
+      // console.log(balancepre);
       const balance = await api.getArchivalBalance('secret15l9cqgz5uezgydrglaak5ahfac69kmx2qpd6xt', parseInt(txs[i].height))
-      console.log(balance);
+      // console.log(balance);
       txs[i].amountDelta = parseInt(balance.amount) - parseInt(balancepre.amount)
       
     }
-    console.log(txs)*/
+    // console.log(txs)*/
   },
   data(){
     return {
       days: [],
       spyAddress: "",
+      zeroTransactions: false,
       // startDateString: "",
       // manualDate: false,
       spyOptions: [
@@ -82,16 +84,20 @@ export default {
     coinConvert,
     async doit() {
       const txs = await api.getSefiTransactionHistory(this.spyAddress);
+      // console.log("pub_tx_logxxx",txs);
       const pub_tx_log = await api.getSpySefiSignedTxs(this.spyAddress);
-      console.log(pub_tx_log);
-      const unclaimedRewards = await api.getSpyUnclaimedRewards(this.spyAddress);
-      // if(this.manualDate) {
-      //   this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress, this.startDateString)
-      // } else {
-      //    this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress)
-      // }
-      this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress)
-      console.log(this.days);
+      // console.log("pub_tx_logxxx",pub_tx_log);
+      this.zeroTransactions = pub_tx_log.length == 0
+      if(!this.zeroTransactions) {
+        const unclaimedRewards = await api.getSpyUnclaimedRewards(this.spyAddress);
+        // if(this.manualDate) {
+        //   this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress, this.startDateString)
+        // } else {
+        //    this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress)
+        // }
+        this.days = await api.parseSefiTransactionHistory(txs, pub_tx_log, unclaimedRewards, this.spyAddress)
+        // console.log(this.days);
+      }
     }
   }
 }
