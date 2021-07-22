@@ -43,10 +43,12 @@ export default {
 
   async getArchivalBalance(contractAddress, height) {
     const Vk = await this.wallet.getSnip20ViewingKey(contractAddress)
+    console.log("viewing_key",Vk)
     if(height === undefined) {
       height = await this.getHeight()
     }
     const address = await this.wallet.getAddress()
+
 
     const msg = {
       "balance": {
@@ -54,7 +56,10 @@ export default {
         "key": Vk
       }
     }
+    console.log("msg",msg)
+    console.log("height", height)
     const res = await this.scrt.queryContract(contractAddress, msg, { height })
+    console.log(res)
     return res.balance
   },
 
@@ -98,7 +103,7 @@ export default {
     const res = await axios.get(url);
     const txs = res.data.txs;
     const filteredTxs = txs.filter(tx => {
-      return parseInt(tx.tx.value.fee.amount[0].amount) >= 75000
+      return parseInt(tx.tx.value.fee.amount[0].amount) >= 40000
     });
     return filteredTxs;
   },
@@ -193,14 +198,21 @@ export default {
 
     //GET SEFI LOG
     const incentivizedToken = await this.getIncentivizedToken(spyAddress);
+    console.log("incentivizedToken", incentivizedToken)
     const sefiTxs = await this.getSignedTxs(incentivizedToken)
     let startDate;
+    console.log("sefitxs",sefiTxs);
     // console.log("initAmount", parseInt(txs[0].coins.amount));
     for(let i=0; i<sefiTxs.length; i++){
       const balancepre = await this.getArchivalBalance(incentivizedToken, parseInt(sefiTxs[i].height) - 1)
       const balance = await this.getArchivalBalance(incentivizedToken, parseInt(sefiTxs[i].height))
-      const delta = parseInt(balancepre.amount) - parseInt(balance.amount)
-      // console.log("delta", delta);
+      let delta;
+      if(balancepre && balance) {
+        delta = parseInt(balancepre.amount) - parseInt(balance.amount)
+      } else {
+        delta = 0;
+      }
+      console.log("delta", delta);
       if(parseInt(txs[0].coins.amount) == delta) {
         startDate = moment(sefiTxs[i].timestamp)
         // console.log("startdate",startDate);
